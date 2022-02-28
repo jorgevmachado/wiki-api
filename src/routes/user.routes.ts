@@ -41,6 +41,7 @@ usersRouter.put(
         [Segments.BODY]: {
             name: Joi.string().required(),
             email: Joi.string().email().required(),
+            admin: Joi.boolean().optional(),
             old_password: Joi.string(),
             password: Joi.string().optional(),
             password_confirmation: Joi.string()

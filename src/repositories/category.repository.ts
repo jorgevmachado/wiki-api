@@ -11,4 +11,9 @@ export default class CategoryRepository extends Repository<Category> {
     async findByName(name: string): Promise<Category | undefined> {
         return await this.findOne({ where: { name }});
     }
+
+    async findByParentId(parent_id: string): Promise<Category | undefined> {
+        return await this.findOne({ where: { parent_id }});
+    }
+
 }

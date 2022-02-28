@@ -17,11 +17,12 @@ export default class UsersController {
     async update(request: Request, response: Response): Promise<Response> {
         const service = new UserService();
         const { id } = request.params;
-        const { name, email, password, old_password } = request.body;
+        const { name, email, admin, password, old_password } = request.body;
         const data = await service.update(
             id,
             name,
             email,
+            admin,
             password,
             old_password
         );

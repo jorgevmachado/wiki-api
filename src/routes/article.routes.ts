@@ -1,29 +1,31 @@
 import {Router} from 'express';
-import CategoriesController from '../controllers/categories.controller';
+import CategoriesController from '../controllers/articles.controller';
 import isAuthenticated from '@core/middlewares/auth.middleware';
 import {celebrate, Joi, Segments} from 'celebrate';
+import ArticlesController from '../controllers/articles.controller';
 
-const categoriesRouter = Router();
-const controller = new CategoriesController();
+const articlesRouter = Router();
+const controller = new ArticlesController();
 
-categoriesRouter.use(isAuthenticated);
+articlesRouter.use(isAuthenticated);
 
-categoriesRouter.get('/', controller.index);
-categoriesRouter.get('/tree', controller.tree);
+articlesRouter.get('/', controller.index);
 
-categoriesRouter.post(
+articlesRouter.post(
     '/',
     celebrate({
         [Segments.BODY]: {
             name: Joi.string().required(),
-            parent_id: Joi.string().optional(),
+            description: Joi.string().required(),
+            content: Joi.string().required(),
+            category_id: Joi.string().required(),
         }
     }),
     controller.create
 );
 
 
-categoriesRouter.put(
+articlesRouter.put(
     '/:id',
     isAuthenticated,
     celebrate({
@@ -32,14 +34,16 @@ categoriesRouter.put(
         },
         [Segments.BODY]: {
             name: Joi.string().required(),
-            parent_id: Joi.string().optional(),
+            description: Joi.string().required(),
+            content: Joi.string().required(),
+            category_id: Joi.string().required(),
         },
     }),
     controller.update
 );
 
 
-categoriesRouter.get(
+articlesRouter.get(
     '/:id',
     isAuthenticated,
     celebrate({
@@ -50,7 +54,7 @@ categoriesRouter.get(
     controller.show
 );
 
-categoriesRouter.delete(
+articlesRouter.delete(
     '/:id',
     isAuthenticated,
     celebrate({
@@ -61,4 +65,4 @@ categoriesRouter.delete(
     controller.delete
 );
 
-export default categoriesRouter;
+export default articlesRouter;

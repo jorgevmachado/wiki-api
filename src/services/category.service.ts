@@ -4,6 +4,8 @@ import CategoryRepository from '../repositories/category.repository';
 import {IPaginate} from '../interfaces/paginate.interface';
 import {Category} from '../entities/category';
 import AppError from '@shared/errors/app.error';
+import {ICategoryTree} from '../interfaces/category-tree.interface';
+import ArticleRepository from '../repositories/article.repository';
 
 export class CategoryService {
 
@@ -14,9 +16,10 @@ export class CategoryService {
         return data;
     }
 
-    async index(): Promise<IPaginate<Category>> {
+    async index(): Promise<IPaginate<ICategory>> {
         const repository = getCustomRepository(CategoryRepository);
         const data = await repository.createQueryBuilder().paginate();
+        data.data = this.path(data.data);
         return data as IPaginate<Category>;
     }
 
@@ -48,4 +51,86 @@ export class CategoryService {
         }
         return data;
     }
+
+    async delete(id: string): Promise<void> {
+        const repository = getCustomRepository(CategoryRepository);
+        const articleRepository = getCustomRepository(ArticleRepository);
+        const data = await repository.findById(id);
+
+        if(!data) {
+            throw new AppError('Category not found.');
+        }
+
+        const subCategoryExists = await repository.findByParentId(id);
+
+        if(subCategoryExists) {
+            throw new AppError('Category has subcategories.');
+        }
+
+        const articlesExists = await articleRepository.findByCategory(data);
+
+        if(articlesExists) {
+            throw new AppError('Category has articles.');
+        }
+
+        data.deleted_at = new Date();
+
+        await repository.save(data);
+    }
+
+    async tree(): Promise<ICategoryTree[] | undefined> {
+        const repository = getCustomRepository(CategoryRepository);
+        const data = await repository.find();
+        return this.toTree(data);
+    }
+
+    private path(data: ICategory[]) {
+        const dataWithPath = this.getDataWithPath(data);
+        dataWithPath.sort((a, b) => {
+            if(a.path < b.path) return -1
+            if(a.path > b.path) return 1
+            return 0
+        });
+        return dataWithPath;
+    }
+
+    private getParent(categories: ICategory[], parentID: string) {
+        const parent = categories.filter(parent => parent.id === parentID);
+        return parent.length ? parent[0] : null;
+    }
+
+    private getDataWithPath(categories: ICategory[]) {
+        return  categories.map(obj => {
+            let path = obj.name;
+            let parent = this.getParent(categories, obj.parent_id);
+            while(parent) {
+                path = `${parent.name} > ${path}`;
+                parent = this.getParent(categories, parent.parent_id);
+            }
+            return {...obj, path};
+        });
+    }
+
+    private toTree(categories: ICategory[], tree?: ICategoryTree[]): ICategoryTree[] | undefined {
+        if(!tree) tree = this.transformCategoryTree(categories.filter(c => !c.parent_id));
+        tree = tree.map(parentNode => {
+            parentNode.children = this.toTree(categories, this.transformCategoryTree(categories.filter(f => f.parent_id === parentNode.id)));
+            return parentNode;
+        });
+        return tree;
+    }
+
+    private transformCategoryTree(categories: ICategory[]) {
+        const categoriesTree: ICategoryTree[] = [];
+        categories.map(c => {
+           categoriesTree.push({
+               id: c.id,
+               name: c.name,
+               parent_id: c.parent_id,
+               children: []
+           })
+        });
+        return categoriesTree;
+    }
+
 }

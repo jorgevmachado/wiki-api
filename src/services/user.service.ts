@@ -40,6 +40,7 @@ export class UserService {
         id: string,
         name: string,
         email: string,
+        admin: boolean,
         password: string,
         old_password: string
     ): Promise<IUser> {
@@ -72,6 +73,7 @@ export class UserService {
 
         data.name = name;
         data.email = email;
+        data.admin = admin;
         data.updated_at = new Date();
 
         await repository.save(data);
