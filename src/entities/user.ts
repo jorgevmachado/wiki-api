@@ -1,5 +1,6 @@
 import {IUser} from '../interfaces/user.interface';
 import {Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn} from 'typeorm';
+import {Exclude, Expose} from 'class-transformer';
 
 @Entity('users')
 export class User implements IUser {
@@ -20,6 +21,7 @@ export class User implements IUser {
     email: string;
 
     @Column()
+    @Exclude()
     password: string;
 
     @CreateDateColumn()
@@ -31,4 +33,11 @@ export class User implements IUser {
     @DeleteDateColumn()
     deleted_at: Date;
 
+    @Expose({ name: 'avatar_url' })
+    getAvatarUrl(): string | null {
+        if (!this.avatar) {
+            return null;
+        }
+        return `http://localhost:3333/files/${this.avatar}`;
+    }
 }

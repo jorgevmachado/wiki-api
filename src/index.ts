@@ -1,14 +1,14 @@
 import 'reflect-metadata';
 import 'dotenv/config';
-import express, {NextFunction, Request, Response} from "express";
+import express, {Request, Response} from "express";
 import 'express-async-errors'
 import cors from 'cors';
 import {errors} from 'celebrate';
 import {pagination} from 'typeorm-pagination';
 import routes from './routes';
-import './core/database/typeorm';
-import errorsMiddleware from '@core/middlewares/error.middleware';
 import AppError from '@shared/errors/app.error';
+import uploadConfig from '@config/upload';
+import './core/database/typeorm';
 
 const app = express();
 
@@ -17,18 +17,17 @@ app.use(express.json());
 
 app.use(pagination);
 
+app.use('/files', express.static(uploadConfig.directory));
+
 app.use(routes);
 
 app.use(errors());
-
-// app.use(errorsMiddleware);
 
 app.use(
     (
         error: Error,
         request: Request,
         response: Response,
-        next: NextFunction
     ) => {
        if(error instanceof AppError) {
           return response

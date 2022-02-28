@@ -8,6 +8,13 @@ import {IPaginate} from '../interfaces/paginate.interface';
 import {IUserToken} from '../interfaces/user-token.interface';
 import {Secret, sign} from 'jsonwebtoken';
 import authConfig from '@config/auth';
+import UserTokenRepository from '../repositories/user-token.repository';
+import path from 'path';
+import uploadConfig from '@config/upload';
+import fs from 'fs';
+import EtherealMail from '@core/mail/ethereal.mail';
+import { addHours, isAfter } from 'date-fns';
+
 
 export class UserService {
     async create( name: string, email: string, password: string): Promise<IUser> {
@@ -122,5 +129,97 @@ export class UserService {
         });
 
         return {user: data, token };
+    }
+
+    async avatar(user_id: string, avatar_filename: string): Promise<User> {
+        const repository = getCustomRepository(UserRepository);
+        const data = await repository.findById(user_id);
+
+        if(!data) {
+            throw new AppError('User not found.');
+        }
+
+        if(data.avatar) {
+            const userAvatarFilePath = path.join(uploadConfig.directory, data.avatar);
+            const userAvatarFileExists = await fs.promises.stat(userAvatarFilePath);
+
+            if(userAvatarFileExists) {
+                await fs.promises.unlink(userAvatarFilePath);
+            }
+        }
+        data.avatar = avatar_filename;
+
+        await repository.save(data);
+
+        return data;
+    }
+
+    async sendForgotPassword(email: string): Promise<string> {
+        const repository = getCustomRepository(UserRepository);
+        const userTokenRepository = getCustomRepository(UserTokenRepository);
+
+        const data = await repository.findByEmail(email);
+
+        if (!data) {
+            throw new AppError('User does not exists.');
+        }
+
+        const { token }  = await userTokenRepository.generate(data);
+
+        console.log(`token => ${token}`);
+
+        const forgotPasswordTemplate = path.resolve(
+            __dirname,
+            '..',
+            'core',
+            'mail',
+            'forgot_password.hbs'
+        );
+
+        const sendEmail = await EtherealMail.sendEmail({
+            to: {
+                name: data.name,
+                email: data.email,
+            },
+            subject: '[WIKI] Recuperação de Senha',
+            templateData: {
+                file: forgotPasswordTemplate,
+                variables: {
+                    name: data.name,
+                    link: `http://localhost:3000/reset_password?token=${token}`,
+                }
+            }
+        });
+        if(!sendEmail) {
+            throw new AppError('could not send password recovery email, please try again later.');
+        }
+        return sendEmail;
+    }
+
+    async resetPassword( password: string, token: string,): Promise<void> {
+            const repository = getCustomRepository(UserRepository);
+            const userTokenRepository = getCustomRepository(UserTokenRepository);
+
+            const userToken = await userTokenRepository.findByToken(token);
+
+            if (!userToken) {
+                throw new AppError('User Token does not exists.');
+            }
+
+            const data = await repository.findById(userToken.user.id as string);
+
+            if (!data) {
+                throw new AppError('User does not exists.');
+            }
+            const tokenCreatedAt = userToken.created_at;
+            const compareDate = addHours(tokenCreatedAt, 2);
+
+            if(isAfter(Date.now(), compareDate)) {
+                throw new AppError('Token expired.');
+            }
+
+            data.password = await hash(password, 8);
+
+            await repository.save(data);
     }
 }

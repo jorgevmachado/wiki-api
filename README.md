@@ -43,6 +43,12 @@
     yarn add class-transformer
 ### tsyringe 
     yarn add tsyringe
+### date-fns 
+    yarn add date-fns
+###  nodemailer
+    yarn add nodemailer
+    yarn add -D @types/nodemailer
+### handlebars
 ### BIG COMMAND DEPENDENCIES
     yarn add express express-async-errors cors typeorm typeorm-pagination reflect-metadata pg celebrate bcryptjs jsonwebtoken multer date-fns dotenv class-transformer tsyringe
 ### BIG COMMAND DEV DEPENDENCIES
@@ -83,6 +89,7 @@
        ".node_modules/@types"
      ],
 ## PROJECT TREE 
+    /uploads
     /src 
         /@types
             /express 
@@ -99,7 +106,8 @@
         /shared 
             /errors 
             /containers 
-    index.ts 
+        index.ts
+
 ## CONFIG DATABASE 
 ### CREATE FILE ormconfig.json  IN PROJECT ROOT 
     touch ormconfig.json
@@ -140,3 +148,6 @@
     },
 ### DEV AMBIENT 
     yarn start 
+## FONTS 
+### FAKE EMAIL <https://ethereal.email/>
+### HANDLEBARS TEMPLATES <https://handlebarsjs.com/>
