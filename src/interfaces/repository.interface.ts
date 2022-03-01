@@ -1,13 +1,20 @@
-export interface IRepository{
-    create( data: any): Promise<any>;
+import {ICategory} from './category.interface';
+import {IPaginate} from './paginate.interface';
 
-    save(data: any): Promise<any>;
+export interface IRepository<T>{
+    create( data: T): Promise<T>;
 
-    index(): Promise<any>;
+    save(data: T): Promise<T>;
 
-    findById(id: string): Promise<any | undefined>;
+    index(): Promise<IPaginate<T[]>>;
 
-    findByEmail(email: string): Promise<any | undefined>;
+    findById(id: string): Promise<T | undefined>;
 
-    findByName(name: string): Promise<any | undefined>
+    findByEmail(email: string): Promise<T | undefined>;
+
+    findByName(name: string): Promise<T | undefined>;
+
+    findByCategory(category: ICategory): Promise<T | undefined>;
+
+    findByParentId(parent_id: string): Promise<T | undefined>
 }

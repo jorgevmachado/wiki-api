@@ -1,4 +1,3 @@
-import {Article} from '../entities/article';
 import ArticleRepository from '../repositories/article.repository';
 import {getCustomRepository} from 'typeorm';
 import CategoryRepository from '../repositories/category.repository';
@@ -6,8 +5,20 @@ import AppError from '@shared/errors/app.error';
 import UserRepository from '../repositories/user.repository';
 import {IPaginate} from '../interfaces/paginate.interface';
 import {IArticle} from '../interfaces/article.interface';
+import {inject, injectable} from 'tsyringe';
+import {IRepository} from '../interfaces/repository.interface';
+import {IUser} from '../interfaces/user.interface';
 
+@injectable()
 export class ArticleService {
+
+    constructor(
+        @inject('ArticleRepository')
+        private repository: IRepository<IArticle>,
+        @inject('UserRepository')
+        private userRepository: IRepository<IUser>
+    ) {}
+
     async create(
         name: string,
         description: string,
@@ -15,30 +26,27 @@ export class ArticleService {
         image_url: string,
         category_id: string,
         user_id: string,
-    ): Promise<Article> {
-        const repository = getCustomRepository(ArticleRepository);
+    ): Promise<IArticle> {
         const categoryRepository = getCustomRepository(CategoryRepository);
-        const userRepository = getCustomRepository(UserRepository);
-
         const category = await categoryRepository.findById(category_id);
 
         if (!category) {
             throw new AppError('Could not find any category with the given id.');
         }
 
-        const user = await userRepository.findById(user_id);
+        const user = await this.userRepository.findById(user_id);
 
         if(!user) {
             throw new AppError('Could not find any user with the given id.');
         }
 
-        const nameExists = await repository.findByName(name);
+        const nameExists = await this.repository.findByName(name);
 
         if(nameExists) {
             throw new AppError('Article name already used.');
         }
 
-        const data = await repository.create({
+        return await this.repository.create({
             name,
             description,
             content,
@@ -46,8 +54,6 @@ export class ArticleService {
             category,
             user,
         });
-        await repository.save(data);
-        return data;
     }
 
     async update(
@@ -58,18 +64,16 @@ export class ArticleService {
         image_url: string,
         category_id: string,
         user_id: string,
-    ): Promise<Article> {
-        const repository = getCustomRepository(ArticleRepository);
+    ): Promise<IArticle> {
         const categoryRepository = getCustomRepository(CategoryRepository);
-        const userRepository = getCustomRepository(UserRepository);
 
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('Article not found.');
         }
 
-        const nameExists = await repository.findByName(name);
+        const nameExists = await this.repository.findByName(name);
 
         if(nameExists && nameExists.id !== id) {
             throw new AppError('Article name already used.');
@@ -81,7 +85,7 @@ export class ArticleService {
             throw new AppError('Could not find any category with the given id.');
         }
 
-        const user = await userRepository.findById(user_id);
+        const user = await this.userRepository.findById(user_id);
 
         if(!user) {
             throw new AppError('Could not find any user with the given id.');
@@ -93,23 +97,20 @@ export class ArticleService {
         data.image_url = image_url;
         data.category = category;
         data.user = user;
-        await repository.save(data);
+        await this.repository.save(data);
         return data;
     }
 
-    async index(): Promise<IPaginate<IArticle>> {
-        const repository = getCustomRepository(ArticleRepository);
-        const data = await repository.createQueryBuilder().paginate();
+    async index(): Promise<IPaginate<IArticle[]>> {
+        const data = await this.repository.index();
         data.data.map( (obj: IArticle) => {
             obj.content = obj.content.toString();
         });
-        return data as IPaginate<Article>;
+        return data as IPaginate<IArticle[]>;
     }
 
     async show(id: string): Promise<IArticle> {
-        const repository = getCustomRepository(ArticleRepository);
-
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('Article not found.');
@@ -121,9 +122,8 @@ export class ArticleService {
     }
 
     async delete(id: string): Promise<void> {
-        const repository = getCustomRepository(ArticleRepository);
 
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('Article not found.');
@@ -131,6 +131,6 @@ export class ArticleService {
 
         data.deleted_at = new Date();
 
-        await repository.save(data);
+        await this.repository.save(data);
     }
 }

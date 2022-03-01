@@ -4,8 +4,8 @@ import {IUser} from '../interfaces/user.interface';
 import {IPaginate} from '../interfaces/paginate.interface';
 import {IRepository} from '../interfaces/repository.interface';
 
-export default class UserRepository implements IRepository {
-    private repository: Repository<User>;
+export default class UserRepository implements Omit<IRepository<IUser>, 'findByCategory' | 'findByParentId'> {
+    private repository: Repository<IUser>;
     constructor() {
         this.repository = getRepository(User);
     }
@@ -27,21 +27,21 @@ export default class UserRepository implements IRepository {
         return data;
     }
 
-    async index(): Promise<IPaginate<IUser>> {
+    async index(): Promise<IPaginate<IUser[]>> {
         const data = await this.repository.createQueryBuilder().paginate();
-        return data as IPaginate<IUser>;
+        return data as IPaginate<IUser[]>;
     }
 
 
-    async findById(id: string): Promise<User | undefined> {
+    async findById(id: string): Promise<IUser | undefined> {
         return await this.repository.findOne({ where: { id} });
     }
 
-    async findByEmail(email: string): Promise<User | undefined> {
+    async findByEmail(email: string): Promise<IUser | undefined> {
         return await this.repository.findOne({ where: { email }});
     }
 
-    async findByName(name: string): Promise<User | undefined> {
+    async findByName(name: string): Promise<IUser | undefined> {
         return await this.repository.findOne({ where: { name }});
     }
 }

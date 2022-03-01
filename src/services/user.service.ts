@@ -2,7 +2,6 @@ import {IUser} from '../interfaces/user.interface';
 import AppError from '@shared/errors/app.error';
 import {compare, hash} from 'bcryptjs';
 import {getCustomRepository} from 'typeorm';
-import {User} from '../entities/user';
 import {IPaginate} from '../interfaces/paginate.interface';
 import {IUserToken} from '../interfaces/user-token.interface';
 import {Secret, sign} from 'jsonwebtoken';
@@ -21,7 +20,7 @@ export class UserService {
 
     constructor(
         @inject('UserRepository')
-        private repository: IRepository) {}
+        private repository: IRepository<IUser>) {}
 
     async create( name: string, email: string, password: string): Promise<IUser> {
 
@@ -40,9 +39,9 @@ export class UserService {
         });
     }
 
-    async index (): Promise<IPaginate<User>> {
+    async index (): Promise<IPaginate<IUser[]>> {
         const data = await this.repository.index();
-        return data as IPaginate<User>;
+        return data as IPaginate<IUser[]>;
     }
 
     async update(
@@ -70,7 +69,7 @@ export class UserService {
         }
 
         if (password && old_password) {
-            const checkOldPassword = await compare(old_password, data.password);
+            const checkOldPassword = await compare(old_password, data.password as string);
 
             if(!checkOldPassword) {
                 throw new AppError('Old password does not match.');
@@ -115,7 +114,7 @@ export class UserService {
             throw new AppError('Incorrect email/password combination.', 401);
         }
 
-        const passwordConfirmed = await compare(password, data.password);
+        const passwordConfirmed = await compare(password, data.password as string);
 
         if(!passwordConfirmed) {
             throw new AppError('Incorrect email/password combination.', 401);
@@ -129,7 +128,7 @@ export class UserService {
         return {user: data, token };
     }
 
-    async avatar(user_id: string, avatar_filename: string): Promise<User> {
+    async avatar(user_id: string, avatar_filename: string): Promise<IUser> {
         const data = await this.repository.findById(user_id);
 
         if(!data) {

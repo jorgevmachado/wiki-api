@@ -1,10 +1,11 @@
 import {Request, Response} from 'express';
 import {ArticleService} from '../services/article.service';
+import {container} from 'tsyringe';
 
 export default class ArticlesController {
 
     async create(request: Request, response: Response): Promise<Response> {
-        const service = new ArticleService();
+        const service = container.resolve(ArticleService);
         const user_id  = request.user.id;
         const {
             name,
@@ -24,12 +25,12 @@ export default class ArticlesController {
         return response.json(data);
     }
     async index(request: Request, response: Response): Promise<Response> {
-        const service = new ArticleService();
+        const service = container.resolve(ArticleService);
         const data = await service.index();
         return response.json(data);
     }
     async update(request: Request, response: Response): Promise<Response> {
-        const service = new ArticleService();
+        const service = container.resolve(ArticleService);
         const user_id  = request.user.id;
         const { id } = request.params;
         const { name,
@@ -50,14 +51,14 @@ export default class ArticlesController {
     }
     async show(request: Request, response: Response): Promise<Response> {
         const { id } = request.params;
-        const service = new ArticleService();
+        const service = container.resolve(ArticleService);
         const data = await service.show(id);
         return response.json(data);
     }
 
     async delete(request: Request, response: Response): Promise<Response> {
         const { id } = request.params;
-        const service = new ArticleService();
+        const service = container.resolve(ArticleService);
         await service.delete(id);
         return response.json([]);
     }

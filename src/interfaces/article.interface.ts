@@ -10,3 +10,5 @@ export interface IArticle extends IBase {
     user: IUser;
     category: ICategory;
 }
+
+
