@@ -3,8 +3,9 @@ import {getRepository, Repository} from 'typeorm';
 import {IUser} from '../interfaces/user.interface';
 import {IPaginate} from '../interfaces/paginate.interface';
 import {IRepository} from '../interfaces/repository.interface';
+import {ICategory} from '../interfaces/category.interface';
 
-export default class UserRepository implements Omit<IRepository<IUser>, 'findByCategory' | 'findByParentId'> {
+export default class UserRepository implements IRepository<IUser> {
     private repository: Repository<IUser>;
     constructor() {
         this.repository = getRepository(User);
@@ -43,5 +44,17 @@ export default class UserRepository implements Omit<IRepository<IUser>, 'findByC
 
     async findByName(name: string): Promise<IUser | undefined> {
         return await this.repository.findOne({ where: { name }});
+    }
+
+    findByCategory(category: ICategory): Promise<IUser | undefined> {
+        return Promise.resolve(undefined);
+    };
+
+    findByParentId(parent_id: string): Promise<IUser | undefined> {
+        return Promise.resolve(undefined);
+    }
+
+    async find(): Promise<IUser[]> {
+        return await this.repository.find();
     }
 }

@@ -1,4 +1,3 @@
-import {getCustomRepository} from 'typeorm';
 import {ICategory} from '../interfaces/category.interface';
 import CategoryRepository from '../repositories/category.repository';
 import {IPaginate} from '../interfaces/paginate.interface';
@@ -6,26 +5,35 @@ import {Category} from '../entities/category';
 import AppError from '@shared/errors/app.error';
 import {ICategoryTree} from '../interfaces/category-tree.interface';
 import ArticleRepository from '../repositories/article.repository';
+import {inject, injectable} from 'tsyringe';
+import {IRepository} from '../interfaces/repository.interface';
+import {IArticle} from '../interfaces/article.interface';
 
+@injectable()
 export class CategoryService {
 
-    async create(name: string, parent_id?: string): Promise<ICategory> {
-        const repository = getCustomRepository(CategoryRepository);
-        const data  =  repository.create({name, parent_id});
-        await repository.save(data);
-        return data;
+    constructor(
+        @inject('CategoryRepository')
+        private repository: IRepository<ICategory>,
+        @inject('ArticleRepository')
+        private articleRepository: IRepository<IArticle>
+    ) {
+
     }
 
-    async index(): Promise<IPaginate<ICategory>> {
-        const repository = getCustomRepository(CategoryRepository);
-        const data = await repository.createQueryBuilder().paginate();
+    async create(name: string, parent_id?: string): Promise<ICategory> {
+        parent_id = parent_id ? parent_id : '';
+        return await this.repository.create({name, parent_id });
+    }
+
+    async index(): Promise<IPaginate<ICategory[]>> {
+        const data = await this.repository.index();
         data.data = this.path(data.data);
-        return data as IPaginate<Category>;
+        return data as IPaginate<Category[]>;
     }
 
     async update(id: string, name: string, parent_id: string): Promise<ICategory> {
-        const repository = getCustomRepository(CategoryRepository);
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('Category not found.');
@@ -38,13 +46,12 @@ export class CategoryService {
             data.parent_id = parent_id;
         }
 
-        await repository.save(data);
+        await this.repository.save(data);
         return data;
     }
 
     async show(id: string): Promise<ICategory> {
-        const repository = getCustomRepository(CategoryRepository);
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('Category not found.');
@@ -53,21 +60,19 @@ export class CategoryService {
     }
 
     async delete(id: string): Promise<void> {
-        const repository = getCustomRepository(CategoryRepository);
-        const articleRepository = getCustomRepository(ArticleRepository);
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('Category not found.');
         }
 
-        const subCategoryExists = await repository.findByParentId(id);
+        const subCategoryExists = await this.repository.findByParentId(id);
 
         if(subCategoryExists) {
             throw new AppError('Category has subcategories.');
         }
 
-        const articlesExists = await articleRepository.findByCategory(data);
+        const articlesExists = await this.articleRepository.findByCategory(data);
 
         if(articlesExists) {
             throw new AppError('Category has articles.');
@@ -75,12 +80,11 @@ export class CategoryService {
 
         data.deleted_at = new Date();
 
-        await repository.save(data);
+        await this.repository.save(data);
     }
 
     async tree(): Promise<ICategoryTree[] | undefined> {
-        const repository = getCustomRepository(CategoryRepository);
-        const data = await repository.find();
+        const data = await this.repository.find();
         return this.toTree(data);
     }
 

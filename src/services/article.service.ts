@@ -1,5 +1,4 @@
 import ArticleRepository from '../repositories/article.repository';
-import {getCustomRepository} from 'typeorm';
 import CategoryRepository from '../repositories/category.repository';
 import AppError from '@shared/errors/app.error';
 import UserRepository from '../repositories/user.repository';
@@ -8,6 +7,7 @@ import {IArticle} from '../interfaces/article.interface';
 import {inject, injectable} from 'tsyringe';
 import {IRepository} from '../interfaces/repository.interface';
 import {IUser} from '../interfaces/user.interface';
+import {ICategory} from '../interfaces/category.interface';
 
 @injectable()
 export class ArticleService {
@@ -15,6 +15,8 @@ export class ArticleService {
     constructor(
         @inject('ArticleRepository')
         private repository: IRepository<IArticle>,
+        @inject('CategoryRepository')
+        private categoryRepository: IRepository<ICategory>,
         @inject('UserRepository')
         private userRepository: IRepository<IUser>
     ) {}
@@ -27,8 +29,7 @@ export class ArticleService {
         category_id: string,
         user_id: string,
     ): Promise<IArticle> {
-        const categoryRepository = getCustomRepository(CategoryRepository);
-        const category = await categoryRepository.findById(category_id);
+        const category = await this.categoryRepository.findById(category_id);
 
         if (!category) {
             throw new AppError('Could not find any category with the given id.');
@@ -65,7 +66,6 @@ export class ArticleService {
         category_id: string,
         user_id: string,
     ): Promise<IArticle> {
-        const categoryRepository = getCustomRepository(CategoryRepository);
 
         const data = await this.repository.findById(id);
 
@@ -79,7 +79,7 @@ export class ArticleService {
             throw new AppError('Article name already used.');
         }
 
-        const category = await categoryRepository.findById(category_id);
+        const category = await this.categoryRepository.findById(category_id);
 
         if (!category) {
             throw new AppError('Could not find any category with the given id.');

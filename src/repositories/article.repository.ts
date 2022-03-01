@@ -4,9 +4,10 @@ import {ICategory} from '../interfaces/category.interface';
 import {IArticle} from '../interfaces/article.interface';
 import {IRepository} from '../interfaces/repository.interface';
 import {IPaginate} from '../interfaces/paginate.interface';
+import {IUser} from '../interfaces/user.interface';
 
 
-export default class ArticleRepository implements Omit<IRepository<IArticle>, 'findByParentId' | 'findByEmail' | 'findByCategory'> {
+export default class ArticleRepository implements IRepository<IArticle> {
 
     private repository: Repository<IArticle>;
 
@@ -55,5 +56,17 @@ export default class ArticleRepository implements Omit<IRepository<IArticle>, 'f
     async index(): Promise<IPaginate<IArticle[]>> {
         const data = await this.repository.createQueryBuilder().paginate();
         return data as IPaginate<IArticle[]>;
+    }
+
+    async find(): Promise<IArticle[]> {
+        return await this.repository.find();
+    }
+
+    findByParentId(parent_id: string): Promise<IArticle | undefined> {
+        return Promise.resolve(undefined);
+    }
+
+    findByEmail(email: string): Promise<IArticle | undefined> {
+        return Promise.resolve(undefined);
     }
 }

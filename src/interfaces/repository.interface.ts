@@ -8,6 +8,8 @@ export interface IRepository<T>{
 
     index(): Promise<IPaginate<T[]>>;
 
+    find(): Promise<T[]>;
+
     findById(id: string): Promise<T | undefined>;
 
     findByEmail(email: string): Promise<T | undefined>;
