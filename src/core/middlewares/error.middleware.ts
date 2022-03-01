@@ -1,10 +1,12 @@
-import {Request, Response} from 'express';
+import {NextFunction, Request, Response} from 'express';
 import AppError from '@shared/errors/app.error';
 
 export default function errorsMiddleware(
     error: Error,
     request: Request,
-    response: Response) {
+    response: Response,
+    next: NextFunction
+) {
     if (error instanceof AppError) {
         return response
             .status(error.statusCode)

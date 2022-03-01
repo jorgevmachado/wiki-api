@@ -1,7 +1,6 @@
 import {IUser} from '../interfaces/user.interface';
 import AppError from '@shared/errors/app.error';
 import {compare, hash} from 'bcryptjs';
-import {getCustomRepository} from 'typeorm';
 import {IPaginate} from '../interfaces/paginate.interface';
 import {IUserToken} from '../interfaces/user-token.interface';
 import {Secret, sign} from 'jsonwebtoken';
@@ -25,21 +24,21 @@ export class UserService {
         private userTokenRepository: IRepository<IUserToken>
     ) {}
 
-    async create( name: string, email: string, password: string): Promise<IUser> {
+    async create( name: string, email: string, password: string): Promise<IUser | undefined> {
+            const emailExists = await this.repository.findByEmail(email);
 
-        const emailExists = await this.repository.findByEmail(email);
-
-        if (emailExists) {
-            throw new AppError('Email address already used.');
-        }
-        const hashedPassword = await hash(password, 8);
+            if (emailExists) {
+                throw new AppError('Email address already used.');
+            }
+            const hashedPassword = await hash(password, 8);
 
         return await this.repository.create({
-            name,
-            email,
-            password: hashedPassword,
-            admin: false
-        });
+                name,
+                email,
+                password: hashedPassword,
+                admin: false
+            });
+
     }
 
     async index (): Promise<IPaginate<IUser[]>> {
