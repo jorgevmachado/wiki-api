@@ -1,18 +1,47 @@
 import {User} from '../entities/user';
-import {EntityRepository, Repository} from 'typeorm';
+import {getRepository, Repository} from 'typeorm';
+import {IUser} from '../interfaces/user.interface';
+import {IPaginate} from '../interfaces/paginate.interface';
+import {IRepository} from '../interfaces/repository.interface';
 
-@EntityRepository(User)
-export default class UserRepository extends Repository<User>{
+export default class UserRepository implements IRepository {
+    private repository: Repository<User>;
+    constructor() {
+        this.repository = getRepository(User);
+    }
+
+    async create(data: IUser): Promise<IUser> {
+        const {name, email, password } = data;
+        const obj = this.repository.create({
+            name,
+            email,
+            password,
+            admin: false
+        });
+        await this.repository.save(obj);
+        return obj;
+    }
+
+    async save(data: IUser): Promise<IUser> {
+        await this.repository.save(data);
+        return data;
+    }
+
+    async index(): Promise<IPaginate<IUser>> {
+        const data = await this.repository.createQueryBuilder().paginate();
+        return data as IPaginate<IUser>;
+    }
+
 
     async findById(id: string): Promise<User | undefined> {
-        return await this.findOne({ where: { id} });
+        return await this.repository.findOne({ where: { id} });
     }
 
     async findByEmail(email: string): Promise<User | undefined> {
-        return await this.findOne({ where: { email }});
+        return await this.repository.findOne({ where: { email }});
     }
 
     async findByName(name: string): Promise<User | undefined> {
-        return await this.findOne({ where: { name }});
+        return await this.repository.findOne({ where: { name }});
     }
 }

@@ -2,7 +2,6 @@ import {IUser} from '../interfaces/user.interface';
 import AppError from '@shared/errors/app.error';
 import {compare, hash} from 'bcryptjs';
 import {getCustomRepository} from 'typeorm';
-import UserRepository from '../repositories/user.repository';
 import {User} from '../entities/user';
 import {IPaginate} from '../interfaces/paginate.interface';
 import {IUserToken} from '../interfaces/user-token.interface';
@@ -13,33 +12,36 @@ import path from 'path';
 import uploadConfig from '@config/upload';
 import fs from 'fs';
 import EtherealMail from '@core/mail/ethereal.mail';
-import { addHours, isAfter } from 'date-fns';
+import {addHours, isAfter} from 'date-fns';
+import {IRepository} from '../interfaces/repository.interface';
+import {inject, injectable} from 'tsyringe';
 
-
+@injectable()
 export class UserService {
-    async create( name: string, email: string, password: string): Promise<IUser> {
-        const repository = getCustomRepository(UserRepository);
 
-        const emailExists = await repository.findByEmail(email);
+    constructor(
+        @inject('UserRepository')
+        private repository: IRepository) {}
+
+    async create( name: string, email: string, password: string): Promise<IUser> {
+
+        const emailExists = await this.repository.findByEmail(email);
 
         if (emailExists) {
             throw new AppError('Email address already used.');
         }
         const hashedPassword = await hash(password, 8);
 
-        const user = repository.create({
+        return await this.repository.create({
             name,
             email,
             password: hashedPassword,
             admin: false
         });
-        await repository.save(user);
-        return user;
     }
 
     async index (): Promise<IPaginate<User>> {
-        const repository = getCustomRepository(UserRepository);
-        const data = await repository.createQueryBuilder().paginate();
+        const data = await this.repository.index();
         return data as IPaginate<User>;
     }
 
@@ -51,14 +53,13 @@ export class UserService {
         password: string,
         old_password: string
     ): Promise<IUser> {
-        const repository = getCustomRepository(UserRepository);
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('User not found.');
         }
 
-        const hasEmail = await repository.findByEmail(email);
+        const hasEmail = await this.repository.findByEmail(email);
 
         if (hasEmail && hasEmail.id !== id) {
             throw new AppError('There is already one user with this email.');
@@ -83,13 +84,12 @@ export class UserService {
         data.admin = admin;
         data.updated_at = new Date();
 
-        await repository.save(data);
+        await this.repository.save(data);
         return data;
     }
 
     async delete(id: string): Promise<void> {
-        const repository = getCustomRepository(UserRepository);
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('User not found.');
@@ -97,12 +97,11 @@ export class UserService {
 
         data.deleted_at = new Date();
 
-        await repository.save(data);
+        await this.repository.save(data);
     }
 
     async show(id: string): Promise<IUser> {
-        const repository = getCustomRepository(UserRepository);
-        const data = await repository.findById(id);
+        const data = await this.repository.findById(id);
 
         if(!data) {
             throw new AppError('User not found.');
@@ -111,8 +110,7 @@ export class UserService {
     }
 
     async login(email: string, password: string): Promise<IUserToken> {
-        const repository = getCustomRepository(UserRepository);
-        const data = await repository.findByEmail(email);
+        const data = await this.repository.findByEmail(email);
         if (!data) {
             throw new AppError('Incorrect email/password combination.', 401);
         }
@@ -132,8 +130,7 @@ export class UserService {
     }
 
     async avatar(user_id: string, avatar_filename: string): Promise<User> {
-        const repository = getCustomRepository(UserRepository);
-        const data = await repository.findById(user_id);
+        const data = await this.repository.findById(user_id);
 
         if(!data) {
             throw new AppError('User not found.');
@@ -149,24 +146,21 @@ export class UserService {
         }
         data.avatar = avatar_filename;
 
-        await repository.save(data);
+        await this.repository.save(data);
 
         return data;
     }
 
     async sendForgotPassword(email: string): Promise<string> {
-        const repository = getCustomRepository(UserRepository);
         const userTokenRepository = getCustomRepository(UserTokenRepository);
 
-        const data = await repository.findByEmail(email);
+        const data = await this.repository.findByEmail(email);
 
         if (!data) {
             throw new AppError('User does not exists.');
         }
 
         const { token }  = await userTokenRepository.generate(data);
-
-        console.log(`token => ${token}`);
 
         const forgotPasswordTemplate = path.resolve(
             __dirname,
@@ -197,7 +191,6 @@ export class UserService {
     }
 
     async resetPassword( password: string, token: string,): Promise<void> {
-            const repository = getCustomRepository(UserRepository);
             const userTokenRepository = getCustomRepository(UserTokenRepository);
 
             const userToken = await userTokenRepository.findByToken(token);
@@ -206,7 +199,7 @@ export class UserService {
                 throw new AppError('User Token does not exists.');
             }
 
-            const data = await repository.findById(userToken.user.id as string);
+            const data = await this.repository.findById(userToken.user.id as string);
 
             if (!data) {
                 throw new AppError('User does not exists.');
@@ -220,6 +213,6 @@ export class UserService {
 
             data.password = await hash(password, 8);
 
-            await repository.save(data);
+            await this.repository.save(data);
     }
 }
