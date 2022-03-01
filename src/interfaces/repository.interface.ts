@@ -1,5 +1,6 @@
 import {ICategory} from './category.interface';
 import {IPaginate} from './paginate.interface';
+import {IUser} from './user.interface';
 
 export interface IRepository<T>{
     create( data: T): Promise<T>;
@@ -18,5 +19,9 @@ export interface IRepository<T>{
 
     findByCategory(category: ICategory): Promise<T | undefined>;
 
-    findByParentId(parent_id: string): Promise<T | undefined>
+    findByParentId(parent_id: string): Promise<T | undefined>;
+
+    findByToken(token: string): Promise<T | undefined>;
+
+    generate(user: IUser): Promise<T>;
 }

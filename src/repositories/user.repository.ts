@@ -1,14 +1,12 @@
 import {User} from '../entities/user';
-import {getRepository, Repository} from 'typeorm';
+import {getRepository} from 'typeorm';
 import {IUser} from '../interfaces/user.interface';
-import {IPaginate} from '../interfaces/paginate.interface';
-import {IRepository} from '../interfaces/repository.interface';
-import {ICategory} from '../interfaces/category.interface';
+import {BaseRepository} from './base.repository';
 
-export default class UserRepository implements IRepository<IUser> {
-    private repository: Repository<IUser>;
+export default class UserRepository extends BaseRepository<IUser> {
+
     constructor() {
-        this.repository = getRepository(User);
+        super(getRepository(User));
     }
 
     async create(data: IUser): Promise<IUser> {
@@ -26,35 +24,5 @@ export default class UserRepository implements IRepository<IUser> {
     async save(data: IUser): Promise<IUser> {
         await this.repository.save(data);
         return data;
-    }
-
-    async index(): Promise<IPaginate<IUser[]>> {
-        const data = await this.repository.createQueryBuilder().paginate();
-        return data as IPaginate<IUser[]>;
-    }
-
-
-    async findById(id: string): Promise<IUser | undefined> {
-        return await this.repository.findOne({ where: { id} });
-    }
-
-    async findByEmail(email: string): Promise<IUser | undefined> {
-        return await this.repository.findOne({ where: { email }});
-    }
-
-    async findByName(name: string): Promise<IUser | undefined> {
-        return await this.repository.findOne({ where: { name }});
-    }
-
-    findByCategory(category: ICategory): Promise<IUser | undefined> {
-        return Promise.resolve(undefined);
-    };
-
-    findByParentId(parent_id: string): Promise<IUser | undefined> {
-        return Promise.resolve(undefined);
-    }
-
-    async find(): Promise<IUser[]> {
-        return await this.repository.find();
     }
 }

@@ -20,7 +20,10 @@ export class UserService {
 
     constructor(
         @inject('UserRepository')
-        private repository: IRepository<IUser>) {}
+        private repository: IRepository<IUser>,
+        @inject('UserTokenRepository')
+        private userTokenRepository: IRepository<IUserToken>
+    ) {}
 
     async create( name: string, email: string, password: string): Promise<IUser> {
 
@@ -151,15 +154,13 @@ export class UserService {
     }
 
     async sendForgotPassword(email: string): Promise<string> {
-        const userTokenRepository = getCustomRepository(UserTokenRepository);
-
         const data = await this.repository.findByEmail(email);
 
         if (!data) {
             throw new AppError('User does not exists.');
         }
 
-        const { token }  = await userTokenRepository.generate(data);
+        const { token }  = await this.userTokenRepository.generate(data);
 
         const forgotPasswordTemplate = path.resolve(
             __dirname,
@@ -190,20 +191,33 @@ export class UserService {
     }
 
     async resetPassword( password: string, token: string,): Promise<void> {
-            const userTokenRepository = getCustomRepository(UserTokenRepository);
 
-            const userToken = await userTokenRepository.findByToken(token);
+            const userToken = await this.userTokenRepository.findByToken(token);
 
             if (!userToken) {
                 throw new AppError('User Token does not exists.');
             }
 
-            const data = await this.repository.findById(userToken.user.id as string);
+            if(!userToken.user) {
+                throw new AppError('User Token does not exists.');
+            }
+
+            if(!userToken.user.id) {
+                throw new AppError('User Token does not exists.');
+            }
+
+            const data = await this.repository.findById( userToken.user.id);
 
             if (!data) {
                 throw new AppError('User does not exists.');
             }
+
+            if(!userToken.created_at) {
+                throw new AppError('User Token does not exists.');
+            }
+
             const tokenCreatedAt = userToken.created_at;
+
             const compareDate = addHours(tokenCreatedAt, 2);
 
             if(isAfter(Date.now(), compareDate)) {

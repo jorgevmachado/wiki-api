@@ -1,7 +1,6 @@
 import {Request, Response} from 'express';
 import {UserService} from '../services/user.service';
 import {instanceToInstance} from 'class-transformer';
-import UserRepository from '../repositories/user.repository';
 import {container} from 'tsyringe';
 
 export default class UsersController {
@@ -63,16 +62,14 @@ export default class UsersController {
 
     async forgotPassword(request: Request, response: Response): Promise<Response> {
         const { email } = request.body;
-        const repository = new UserRepository();
-        const service = new UserService(repository);
+        const service = container.resolve(UserService);
         const link_email = await service.sendForgotPassword(email);
         return response.json({link_email});
     }
 
     async resetPassword(request: Request, response: Response): Promise<Response> {
         const { password, token } = request.body;
-        const repository = new UserRepository();
-        const service = new UserService(repository);
+        const service = container.resolve(UserService);
         await service.resetPassword(password, token);
         return response.status(204).json();
     }
