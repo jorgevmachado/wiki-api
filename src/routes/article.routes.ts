@@ -1,8 +1,7 @@
 import {Router} from 'express';
-import CategoriesController from '../controllers/articles.controller';
+import ArticlesController from '../controllers/articles.controller';
 import isAuthenticated from '@core/middlewares/auth.middleware';
 import {celebrate, Joi, Segments} from 'celebrate';
-import ArticlesController from '../controllers/articles.controller';
 
 const articlesRouter = Router();
 const controller = new ArticlesController();
