@@ -25,6 +25,8 @@ usersRouter.post(
     controller.create
 );
 
+usersRouter.get('/validate-token', isAuthenticated, controller.validateToken);
+
 usersRouter.post(
     '/login',
     celebrate({
@@ -110,5 +112,4 @@ usersRouter.post(
     }),
     controller.resetPassword
 );
-
 export default usersRouter;

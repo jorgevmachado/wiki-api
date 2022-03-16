@@ -3,7 +3,7 @@ import AppError from '@shared/errors/app.error';
 import {compare, hash} from 'bcryptjs';
 import {IPaginate} from '../interfaces/paginate.interface';
 import {IUserToken} from '../interfaces/user-token.interface';
-import {Secret, sign} from 'jsonwebtoken';
+import {Secret, sign, verify} from 'jsonwebtoken';
 import authConfig from '@config/auth';
 import UserTokenRepository from '../repositories/user-token.repository';
 import path from 'path';
@@ -13,6 +13,7 @@ import EtherealMail from '@core/mail/ethereal.mail';
 import {addHours, isAfter} from 'date-fns';
 import {IRepository} from '../interfaces/repository.interface';
 import {inject, injectable} from 'tsyringe';
+import {ITokenPayload} from '../interfaces/token-payload.interface';
 
 @injectable()
 export class UserService {
@@ -226,5 +227,21 @@ export class UserService {
             data.password = await hash(password, 8);
 
             await this.repository.save(data);
+    }
+
+    validateToken (authorization: string | undefined): boolean {
+        if (authorization === undefined) {
+            throw new AppError('JWT Token is missing.');
+        }
+        const [, token] = authorization.split(' ');
+        try {
+            const decodedToken = verify(token, authConfig.jwt.secret as Secret);
+            const { exp } = decodedToken as ITokenPayload;
+            const dateExp = new Date(exp * 1000);
+            const dateNow = new Date();
+            return dateExp > dateNow;
+        }catch {
+            throw new AppError('Invalid JWT token.');
+        }
     }
 }

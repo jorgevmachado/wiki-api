@@ -74,4 +74,11 @@ export default class UsersController {
         return response.status(204).json();
     }
 
+    async validateToken(request: Request, response: Response): Promise<Response> {
+        const { authorization } = request.headers;
+        const service = container.resolve(UserService);
+        const validatingToken = service.validateToken(authorization)
+        return response.json({ valid: validatingToken });
+    }
+
 }
