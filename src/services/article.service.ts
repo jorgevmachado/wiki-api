@@ -97,6 +97,7 @@ export class ArticleService {
         data.image_url = image_url;
         data.category = category;
         data.user = user;
+        data.updated_at = new Date();
         await this.repository.save(data);
         return data;
     }
