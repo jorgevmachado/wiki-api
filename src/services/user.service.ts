@@ -229,19 +229,27 @@ export class UserService {
             await this.repository.save(data);
     }
 
-    validateToken (authorization: string | undefined): boolean {
-        if (authorization === undefined) {
+    async validateToken(id: string, authorization: string): Promise<IUserToken> {
+        if (authorization === '') {
             throw new AppError('JWT Token is missing.');
         }
         const [, token] = authorization.split(' ');
-        try {
-            const decodedToken = verify(token, authConfig.jwt.secret as Secret);
-            const { exp } = decodedToken as ITokenPayload;
-            const dateExp = new Date(exp * 1000);
-            const dateNow = new Date();
-            return dateExp > dateNow;
-        }catch {
-            throw new AppError('Invalid JWT token.');
+        if(this.tokenExpired(token)) {
+            throw new AppError('JWT Token expired.', 401);
         }
+        const data = await this.repository.findById(id);
+
+        if(!data) {
+            throw new AppError('User not found.');
+        }
+        return {user: data, token };
+    }
+
+    tokenExpired(token: string) {
+        const decodedToken = verify(token, authConfig.jwt.secret as Secret);
+        const { exp } = decodedToken as ITokenPayload;
+        const dateExp = new Date(exp * 1000);
+        const dateNow = new Date();
+        return dateExp < dateNow;
     }
 }
