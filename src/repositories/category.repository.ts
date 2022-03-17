@@ -11,10 +11,8 @@ export default class CategoryRepository extends BaseRepository<ICategory>{
 
     async create(data: ICategory): Promise<ICategory> {
         const { name, parent_id } = data;
-        const obj = this.repository.create({
-            name,
-            parent_id
-        });
+        const create = (parent_id !== '') ? { name, parent_id } : { name };
+        const obj = this.repository.create(create);
         await this.repository.save(obj);
         return data;
     }
