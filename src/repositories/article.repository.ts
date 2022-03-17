@@ -11,6 +11,10 @@ export default class ArticleRepository extends BaseRepository<IArticle>{
         super(getRepository(Article));
     }
 
+    async findById(id: string): Promise<IArticle | undefined> {
+        return await this.repository.findOne({ where: { id}, relations: ['user', 'category'] });
+    }
+
     async findByCategory(category: ICategory): Promise<IArticle | undefined> {
         return await this.repository.findOne({ where: { category }});
     }
