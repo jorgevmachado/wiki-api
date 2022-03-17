@@ -25,9 +25,8 @@ export class UserService {
         private userTokenRepository: IRepository<IUserToken>
     ) {}
 
-    async create( name: string, email: string, password: string, admin: boolean = false): Promise<IUser | undefined> {
+    async create( name: string, email: string, password: string, admin: boolean): Promise<IUser | undefined> {
             const emailExists = await this.repository.findByEmail(email);
-
             if (emailExists) {
                 throw new AppError('Email address already used.');
             }
