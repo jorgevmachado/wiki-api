@@ -72,7 +72,7 @@ export class CategoryService {
             throw new AppError('Category has subcategories.');
         }
 
-        const articlesExists = await this.articleRepository.findByCategory(data);
+        const articlesExists = await this.articleRepository.findOneByCategory(data);
 
         if(articlesExists) {
             throw new AppError('Category has articles.');
@@ -86,6 +86,24 @@ export class CategoryService {
     async tree(): Promise<ICategoryTree[] | undefined> {
         const data = await this.repository.find();
         return this.toTree(data);
+    }
+
+    async articleByCategoryId(id: string): Promise<IArticle[] | undefined> {
+        const category = await this.repository.findById(id);
+
+        if(!category) {
+            throw new AppError('Category not found.');
+        }
+
+        const articles = await this.articleRepository.findByCategory(category);
+
+        if(!articles) {
+            throw new AppError('Category has no article.');
+        }
+        articles.map(article => {
+            article.content = article.content.toString();
+        });
+        return articles;
     }
 
     private path(data: ICategory[]) {

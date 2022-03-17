@@ -43,4 +43,11 @@ export default class CategoriesController {
         const data = await service.tree();
         return response.json(data);
     }
+
+    async articleByCategoryId(request: Request, response: Response): Promise<Response> {
+        const { id } = request.params;
+        const service = container.resolve(CategoryService);
+        const data = await service.articleByCategoryId(id);
+        return response.json(data);
+    }
 }

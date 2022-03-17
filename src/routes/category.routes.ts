@@ -61,4 +61,15 @@ categoriesRouter.delete(
     controller.delete
 );
 
+categoriesRouter.get(
+    '/:id/articles',
+    isAuthenticated,
+    celebrate({
+        [Segments.PARAMS]: {
+            id: Joi.string().uuid().required(),
+        },
+    }),
+    controller.articleByCategoryId
+);
+
 export default categoriesRouter;

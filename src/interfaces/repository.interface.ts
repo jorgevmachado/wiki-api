@@ -17,7 +17,9 @@ export interface IRepository<T>{
 
     findByName(name: string): Promise<T | undefined>;
 
-    findByCategory(category: ICategory): Promise<T | undefined>;
+    findOneByCategory(category: ICategory): Promise<T | undefined>;
+
+    findByCategory(category: ICategory): Promise<T[] | undefined>;
 
     findByParentId(parent_id: string): Promise<T | undefined>;
 

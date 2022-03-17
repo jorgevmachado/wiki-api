@@ -42,7 +42,11 @@ export class BaseRepository<I> implements IRepository<I> {
         throw new AppError('Not Implement yet!');
     }
 
-    async findByCategory(category: ICategory): Promise<I | undefined> {
+    async findOneByCategory(category: ICategory): Promise<I | undefined> {
+        throw new AppError('Not Implement yet!');
+    }
+
+    async findByCategory(category: ICategory): Promise<I[] | undefined> {
         throw new AppError('Not Implement yet!');
     }
 

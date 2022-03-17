@@ -15,8 +15,12 @@ export default class ArticleRepository extends BaseRepository<IArticle>{
         return await this.repository.findOne({ where: { id}, relations: ['user', 'category'] });
     }
 
-    async findByCategory(category: ICategory): Promise<IArticle | undefined> {
-        return await this.repository.findOne({ where: { category }});
+    async findOneByCategory(category: ICategory): Promise<IArticle | undefined> {
+        return await this.repository.findOne({ where: { category }, relations: ['user', 'category']});
+    }
+
+    async findByCategory(category: ICategory): Promise<IArticle[] | undefined> {
+        return await this.repository.find({ where: { category }, relations: ['user', 'category']});
     }
 
     async create(data: IArticle): Promise<IArticle> {
