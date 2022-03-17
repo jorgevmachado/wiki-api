@@ -25,7 +25,7 @@ export class UserService {
         private userTokenRepository: IRepository<IUserToken>
     ) {}
 
-    async create( name: string, email: string, password: string): Promise<IUser | undefined> {
+    async create( name: string, email: string, password: string, admin: boolean = false): Promise<IUser | undefined> {
             const emailExists = await this.repository.findByEmail(email);
 
             if (emailExists) {
@@ -37,7 +37,7 @@ export class UserService {
                 name,
                 email,
                 password: hashedPassword,
-                admin: false
+                admin
             });
 
     }

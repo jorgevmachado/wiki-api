@@ -7,8 +7,8 @@ export default class UsersController {
 
     async create(request: Request, response: Response): Promise<Response> {
         const service = container.resolve(UserService);
-        const { name, email, password } = request.body;
-        const data = await service.create(name, email, password);
+        const { name, email, password, admin } = request.body;
+        const data = await service.create(name, email, password, admin);
         return response.json(instanceToInstance(data));
     }
 
